@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revival Apostolic Faith Mission - Digital Magazine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        purple: {
+                            church: '#6B46C1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Dark mode support */
+        .dark { background-color: #181818; color: white; }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Magazine Editor Styles */
+        .content-block { 
+            position: relative; 
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        .content-block:hover {
+            background-color: rgba(99, 102, 241, 0.05);
+            border-radius: 8px;
+        }
+        .content-block .block-toolbar {
+            display: none;
+            position: absolute;
+            top: -35px;
+            right: 0;
+            background-color: #1f2937;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .content-block:hover .block-toolbar { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center;
+        }
+        .content-block.selected {
+            outline: 2px dashed #5D5CDE;
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+        .drag-handle { cursor: move; }
+        .page-preview.active {
+            border-color: #5D5CDE;
+            box-shadow: 0 0 0 2px #5D5CDE;
+            background-color: rgba(93, 92, 222, 0.1);
+        }
+        #editor-canvas { 
+            min-height: 70vh; 
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        
+        /* Media Upload Styles */
+        .media-upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .media-upload-zone:hover {
+            border-color: #5D5CDE;
+            background-color: rgba(93, 92, 222, 0.05);
+        }
+        .media-upload-zone.dragover {
+            border-color: #5D5CDE;
+            background-color: rgba(93, 92, 222, 0.1);
+        }
+        
+        /* Church-specific styling */
+        .church-header {
+            background: linear-gradient(135deg, #6B46C1 0%, #5D5CDE 100%);
+        }
+        
+        /* PDF-ready styles */
+        @media print {
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <!-- Header and Navigation -->
+    <header class="church-header text-white shadow-lg sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                    <i class="fas fa-dove text-purple-church text-lg"></i>
+                </div>
+                <a href="#" data-page="home" class="nav-link text-2xl font-bold">Revival Apostolic Faith Mission</a>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <button data-page="home" class="nav-link text-white/90 hover:text-white transition-colors">Home</button>
+                <button data-page="leadership" class="nav-link text-white/90 hover:text-white transition-colors">Leadership</button>
+                <button data-page="sermons" class="nav-link text-white/90 hover:text-white transition-colors">Sermons</button>
+                <button data-page="magazines" class="nav-link text-white/90 hover:text-white transition-colors">Digital Magazine</button>
+                <button data-page="programs" class="nav-link text-white/90 hover:text-white transition-colors">Programs</button>
+                <button data-page="contact" class="nav-link text-white/90 hover:text-white transition-colors">Contact</button>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-purple-800 py-2">
+            <button data-page="home" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Home</button>
+            <button data-page="leadership" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Leadership</button>
+            <button data-page="sermons" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Sermons</button>
+            <button data-page="magazines" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Digital Magazine</button>
+            <button data-page="programs" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Programs</button>
+            <button data-page="contact" class="nav-link block w-full text-left px-6 py-2 text-white/90 hover:bg-purple-700">Contact</button>
+        </div>
+    </header>
+
+    <main id="main-content" class="container mx-auto p-6 md:p-8">
+
+        <!-- Home Page -->
+        <div id="home-page" class="page">
+            <section class="church-header text-white p-8 rounded-xl shadow-xl text-center mb-12">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                        <i class="fas fa-dove text-purple-church text-2xl"></i>
+                    </div>
+                </div>
+                <h1 class="text-4xl font-bold mb-4">Revival Apostolic Faith Mission</h1>
+                <blockquote class="text-xl italic mb-4">"For I know the plans I have for you," declares the LORD, "plans to prosper you and not to harm you, plans to give you hope and a future."</blockquote>
+                <cite class="block text-lg">- Jeremiah 29:11</cite>
+            </section>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">About Our Ministry</h2>
+                    <p class="text-lg leading-relaxed mb-4">
+                        Welcome to Revival Apostolic Faith Mission! We are a Spirit-filled church dedicated to advancing the Kingdom of God through revival, prophecy, and apostolic ministry. Our mission is to see lives transformed, communities restored, and nations impacted by the power of God.
+                    </p>
+                    <p class="text-lg leading-relaxed">
+                        Founded on the principles of faith, hope, and love, we believe in the full gospel message and the gifts of the Holy Spirit. Join us as we experience God's presence and walk in His purpose for our lives.
+                    </p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-semibold mb-4">Service Times</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium">Sunday Service</span>
+                            <span class="text-primary font-semibold">9:00 AM</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium">Prayer Meeting</span>
+                            <span class="text-primary font-semibold">Wednesday 6:00 PM</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="font-medium">Bible Study</span>
+                            <span class="text-primary font-semibold">Friday 7:00 PM</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Leadership Page -->
+        <div id="leadership-page" class="page">
+            <h1 class="text-4xl font-bold text-center mb-12">Our Leadership</h1>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Bishop Abel Mukudzi -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
+                    <div class="h-96 bg-gray-200 flex items-center justify-center">
+                        <img src="https://pfst.cf2.poecdn.net/base/image/05b3d8a7531b7ce20b9f9ebefe1db427c5b03e90ee3dc06331f1c16d537e29a3?w=600&h=800" 
+                             alt="Bishop Abel Mukudzi" 
+                             class="w-full h-full object-contain">
+                    </div>
+                    <div class="p-8">
+                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Bishop Abel Mukudzi</h2>
+                        <p class="text-primary font-semibold mb-4">Senior Pastor & Founder</p>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Bishop Abel Mukudzi is the founder and senior pastor of Revival Apostolic Faith Mission. With decades of ministry experience, he has been instrumental in establishing churches and training ministers across the region. His heart for revival and apostolic ministry has touched countless lives.
+                        </p>
+                        <div class="mt-6">
+                            <h3 class="font-semibold text-lg mb-2">Ministry Highlights:</h3>
+                            <ul class="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
+                                <li>Founder of Revival Apostolic Faith Mission (1972)</li>
+                                <li>Established multiple churches across Zimbabwe</li>
+                                <li>Conference speaker and church planter</li>
+                                <li>Author and Bible teacher</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- First Lady -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
+                    <div class="h-96 bg-gray-200 flex items-center justify-center">
+                        <img src="https://pfst.cf2.poecdn.net/base/image/0642f127d585cbcef432b2ce605098596d98439740735585645c1b45cd2e122d?w=400&h=400" 
+                             alt="First Lady" 
+                             class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-8">
+                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Prophetess Sarah Mukudzi</h2>
+                        <p class="text-primary font-semibold mb-4">First Lady & Women's Ministry Leader</p>
+                        <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Prophetess Sarah Mukudzi serves alongside Bishop Mukudzi in ministry and leads our women's ministry with passion and dedication. Her prophetic gifting and heart for mentoring women has impacted generations of believers.
+                        </p>
+                        <div class="mt-6">
+                            <h3 class="font-semibold text-lg mb-2">Ministry Focus:</h3>
+                            <ul class="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
+                                <li>Women's Ministry Leadership</li>
+                                <li>Prophetic Ministry</li>
+                                <li>Marriage and Family Counseling</li>
+                                <li>Community Outreach Programs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sermons Page -->
+        <div id="sermons-page" class="page">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-4xl font-bold">Sermons & Teachings</h1>
+                <button id="upload-sermon-btn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-upload mr-2"></i>Upload Sermon
+                </button>
+            </div>
+
+            <div id="sermons-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Sample sermon cards will be populated here -->
+            </div>
+        </div>
+
+        <!-- Programs Page -->
+        <div id="programs-page" class="page">
+            <h1 class="text-4xl font-bold mb-8">Church Programs & Initiatives</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-4">Community Outreach</h2>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+                        <li class="flex items-center"><i class="fas fa-heart text-red-500 mr-3"></i>Food Distribution Programs</li>
+                        <li class="flex items-center"><i class="fas fa-graduation-cap text-blue-500 mr-3"></i>Educational Support</li>
+                        <li class="flex items-center"><i class="fas fa-hands-helping text-green-500 mr-3"></i>Skills Development</li>
+                        <li class="flex items-center"><i class="fas fa-seedling text-yellow-500 mr-3"></i>Agricultural Projects</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-4">Youth Ministry</h2>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-300">
+                        <li class="flex items-center"><i class="fas fa-users text-blue-500 mr-3"></i>Youth Fellowship</li>
+                        <li class="flex items-center"><i class="fas fa-music text-purple-500 mr-3"></i>Worship Team</li>
+                        <li class="flex items-center"><i class="fas fa-book-open text-green-500 mr-3"></i>Bible Study Groups</li>
+                        <li class="flex items-center"><i class="fas fa-football text-orange-500 mr-3"></i>Sports Activities</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Digital Magazine Section -->
+        <div id="magazines-page" class="page">
+            <!-- Magazine List View -->
+            <div id="magazine-list-view">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-4xl font-bold">Digital Magazines</h1>
+                    <button id="new-magazine-btn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Magazine
+                    </button>
+                </div>
+                <div id="magazines-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Magazine Editor -->
+            <div id="editor-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center space-x-4">
+                        <button id="back-to-list-btn" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Magazines
+                        </button>
+                        <input id="magazine-title-input" type="text" 
+                               class="text-2xl font-bold bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-primary outline-none transition-colors" 
+                               value="Untitled Magazine">
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="publish-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-paper-plane mr-2"></i>Publish
+                        </button>
+                        <button id="delete-magazine-btn" class="bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Pages Sidebar -->
+                    <div class="col-span-12 lg:col-span-2">
+                        <h2 class="text-xl font-semibold mb-4">Pages</h2>
+                        <div id="pages-sidebar" class="space-y-3"></div>
+                        <button id="add-page-btn" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Page
+                        </button>
+                    </div>
+
+                    <!-- Editor Canvas -->
+                    <div class="col-span-12 lg:col-span-7">
+                        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl">
+                            <div id="editor-canvas" class="p-8"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tools Sidebar -->
+                    <div class="col-span-12 lg:col-span-3">
+                        <!-- Content Blocks -->
+                        <div class="mb-8">
+                            <h2 class="text-xl font-semibold mb-4">Content Blocks</h2>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="heading">
+                                    <i class="fas fa-heading text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Heading</span>
+                                </button>
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="text">
+                                    <i class="fas fa-paragraph text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Text</span>
+                                </button>
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="image">
+                                    <i class="fas fa-image text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Image</span>
+                                </button>
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="video">
+                                    <i class="fas fa-video text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Video</span>
+                                </button>
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="audio">
+                                    <i class="fas fa-volume-up text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Audio</span>
+                                </button>
+                                <button class="add-block-btn bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-md text-center transition-all" data-block-type="divider">
+                                    <i class="fas fa-minus text-2xl mb-2 text-primary"></i>
+                                    <span class="block text-sm">Divider</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Properties Panel -->
+                        <div id="properties-panel" class="hidden">
+                            <h2 class="text-xl font-semibold mb-4">Properties</h2>
+                            <div id="properties-content" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Page -->
+        <div id="contact-page" class="page">
+            <h1 class="text-4xl font-bold mb-8">Get In Touch</h1>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div>
+                    <h2 class="text-2xl font-semibold mb-6">Contact Information</h2>
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center space-x-4">
+                            <i class="fas fa-map-marker-alt text-primary text-xl w-6"></i>
+                            <span>Revival Apostolic Faith Mission, Zimbabwe</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <i class="fas fa-phone text-primary text-xl w-6"></i>
+                            <span>+263 XX XXX XXXX</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <i class="fas fa-envelope text-primary text-xl w-6"></i>
+                            <span>info@revivalafm.org</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">Ministry Hours</h3>
+                        <div class="space-y-2">
+                            <p><strong>Office Hours:</strong> Monday - Friday 9:00 AM - 5:00 PM</p>
+                            <p><strong>Pastoral Care:</strong> Available by appointment</p>
+                            <p><strong>Emergency:</strong> 24/7 prayer line available</p>
+                            <p class="italic text-primary">"We are here to serve you in your time of need"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-semibold mb-6">Send a Message</h2>
+                    <form id="contact-form" class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg space-y-6">
+                        <div>
+                            <label for="contact-name" class="block text-sm font-medium mb-2">Your Name</label>
+                            <input type="text" id="contact-name" class="w-full text-base px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700" required>
+                        </div>
+                        <div>
+                            <label for="contact-email" class="block text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="contact-email" class="w-full text-base px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700" required>
+                        </div>
+                        <div>
+                            <label for="contact-message" class="block text-sm font-medium mb-2">Message</label>
+                            <textarea id="contact-message" rows="5" class="w-full text-base px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700" required></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-semibold">
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="church-header text-white mt-16">
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Church Info -->
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                            <i class="fas fa-dove text-purple-church"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">Revival Apostolic Faith Mission</h3>
+                    </div>
+                    <p class="text-white/80 mb-4">
+                        Advancing the Kingdom of God through revival, prophecy, and apostolic ministry since 1972.
+                    </p>
+                    <p class="text-white/60 italic">"For I know the plans I have for you," declares the LORD</p>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><button data-page="home" class="nav-link text-white/80 hover:text-white transition-colors">Home</button></li>
+                        <li><button data-page="leadership" class="nav-link text-white/80 hover:text-white transition-colors">Leadership</button></li>
+                        <li><button data-page="sermons" class="nav-link text-white/80 hover:text-white transition-colors">Sermons</button></li>
+                        <li><button data-page="programs" class="nav-link text-white/80 hover:text-white transition-colors">Programs</button></li>
+                        <li><button data-page="contact" class="nav-link text-white/80 hover:text-white transition-colors">Contact</button></li>
+                    </ul>
+                </div>
+
+                <!-- Service Times -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Service Times</h4>
+                    <ul class="space-y-2 text-white/80">
+                        <li><i class="fas fa-clock mr-2"></i>Sunday Service: 9:00 AM</li>
+                        <li><i class="fas fa-clock mr-2"></i>Prayer Meeting: Wed 6:00 PM</li>
+                        <li><i class="fas fa-clock mr-2"></i>Bible Study: Fri 7:00 PM</li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact Us</h4>
+                    <ul class="space-y-2 text-white/80">
+                        <li><i class="fas fa-map-marker-alt mr-2"></i>Zimbabwe</li>
+                        <li><i class="fas fa-phone mr-2"></i>+263 XX XXX XXXX</li>
+                        <li><i class="fas fa-envelope mr-2"></i>info@revivalafm.org</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <div class="text-white/80 text-sm mb-4 md:mb-0">
+                    <p>&copy; 2024 Revival Apostolic Faith Mission. All rights reserved.</p>
+                </div>
+                
+                <!-- Web Builder Credit -->
+                <div class="text-white/60 text-sm text-center md:text-right">
+                    <p class="mb-1">Website built by <span class="text-white font-medium">Munyaradzi Chiondegwa</span></p>
+                    <a href="https://wa.me/263713794347" target="_blank" 
+                       class="inline-flex items-center text-green-400 hover:text-green-300 transition-colors">
+                        <i class="fab fa-whatsapp mr-1"></i>
+                        +263 71 379 4347
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-2xl mx-4">
+            <h2 class="text-2xl font-bold mb-6">Upload Media</h2>
+            
+            <div class="media-upload-zone mb-6" id="media-drop-zone">
+                <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                <p class="text-lg mb-2">Drag & drop your files here</p>
+                <p class="text-sm text-gray-500 mb-4">Supports images, videos, audio files</p>
+                <input type="file" id="media-file-input" class="hidden" multiple accept="image/*,video/*,audio/*">
+                <button onclick="document.getElementById('media-file-input').click()" class="bg-primary text-white px-6 py-3 rounded-lg">
+                    Choose Files
+                </button>
+            </div>
+
+            <div id="upload-progress" class="hidden mb-6">
+                <div class="bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-sm text-gray-600 mt-2">Uploading...</p>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button id="cancel-upload-btn" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button id="upload-btn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50" disabled>
+                    Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publish Modal -->
+    <div id="publish-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold mb-6">Publish Magazine</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">Your magazine is ready to be shared with the community.</p>
+            
+            <div class="mb-6">
+                <label for="share-link" class="block text-sm font-medium mb-2">Shareable Link</label>
+                <input id="share-link" type="text" readonly class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border rounded-lg text-sm">
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex space-x-4">
+                    <a id="whatsapp-share-btn" href="#" target="_blank" class="text-green-500 hover:text-green-600 text-3xl">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a id="email-share-btn" href="#" class="text-blue-500 hover:text-blue-600 text-3xl">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                </div>
+                <button id="download-pdf-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                </button>
+            </div>
+
+            <button id="close-publish-modal-btn" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Magazine Viewer -->
+    <div id="viewer-container" class="hidden bg-white dark:bg-gray-900">
+        <div id="viewer-content" class="max-w-4xl mx-auto p-8"></div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sample data with Revival Apostolic Faith Mission content
+            let db = {
+                magazines: [{
+                    id: 'mag1',
+                    title: 'Revival Apostolic Faith Mission Newsletter',
+                    pages: [[
+                        {
+                            id: 'block1',
+                            type: 'heading',
+                            content: 'Revival Apostolic Faith Mission',
+                            style: { textAlign: 'center', fontSize: '42px', color: '#6B46C1', fontWeight: 'bold' }
+                        },
+                        {
+                            id: 'block2',
+                            type: 'image',
+                            content: 'https://pfst.cf2.poecdn.net/base/image/92f4a8e778f2b657c4c6cb9e6238410703aeec91b0b0e1a7bf8061a54e38135a?w=200&h=200',
+                            style: { width: '200px', margin: '20px auto', display: 'block' }
+                        },
+                        {
+                            id: 'block3',
+                            type: 'heading',
+                            content: 'Monthly Newsletter - December 2024',
+                            style: { textAlign: 'center', fontSize: '24px', color: '#5D5CDE' }
+                        }
+                    ], [
+                        {
+                            id: 'block4',
+                            type: 'heading',
+                            content: "Bishop's Message",
+                            style: { fontSize: '32px', color: '#4A5568', borderBottom: '3px solid #6B46C1', paddingBottom: '10px' }
+                        },
+                        {
+                            id: 'block5',
+                            type: 'image',
+                            content: 'https://pfst.cf2.poecdn.net/base/image/05b3d8a7531b7ce20b9f9ebefe1db427c5b03e90ee3dc06331f1c16d537e29a3?w=300&h=400',
+                            style: { width: '300px', float: 'left', margin: '0 20px 20px 0', borderRadius: '10px' }
+                        },
+                        {
+                            id: 'block6',
+                            type: 'text',
+                            content: 'Greetings in the precious name of our Lord Jesus Christ! As we close this year and prepare for a new season, I am reminded of God\'s faithfulness throughout our journey. The Revival Apostolic Faith Mission continues to be a beacon of hope and transformation in our community. We have witnessed mighty moves of God, healings, deliverances, and countless testimonies of His goodness. Our partnership with BRICS-WBA has opened new doors for empowering women in our congregation and community at large.',
+                            style: { fontSize: '16px', lineHeight: '1.8', textAlign: 'justify' }
+                        }
+                    ], [
+                        {
+                            id: 'block7',
+                            type: 'heading',
+                            content: 'Church Programs & Events',
+                            style: { fontSize: '32px', color: '#4A5568', borderBottom: '3px solid #6B46C1', paddingBottom: '10px' }
+                        },
+                        {
+                            id: 'block8',
+                            type: 'text',
+                            content: '<strong>Sunday Services:</strong> Every Sunday at 9:00 AM - Join us for powerful worship and the Word<br><strong>Prayer Meetings:</strong> Wednesday 6:00 PM - Corporate prayer and intercession<br><strong>Women\'s Ministry:</strong> Led by Prophetess Sarah Mukudzi - Empowering women of faith<br><strong>Youth Programs:</strong> Saturdays 2:00 PM - Building the next generation<br><strong>BRICS-WBA Partnership:</strong> Supporting women entrepreneurs and business development',
+                            style: { fontSize: '16px', lineHeight: '1.8' }
+                        },
+                        {
+                            id: 'block9',
+                            type: 'image',
+                            content: 'https://pfst.cf2.poecdn.net/base/image/0642f127d585cbcef432b2ce605098596d98439740735585645c1b45cd2e122d?w=300&h=400',
+                            style: { width: '300px', float: 'right', margin: '20px 0 20px 20px', borderRadius: '10px' }
+                        }
+                    ]]
+                }],
+                sermons: [
+                    {
+                        id: 'sermon1',
+                        title: 'The Power of Revival',
+                        speaker: 'Bishop Abel Mukudzi',
+                        date: '2024-12-15',
+                        type: 'video',
+                        thumbnail: 'https://via.placeholder.com/400x300?text=The+Power+of+Revival',
+                        description: 'A powerful message on experiencing true revival in our personal lives and communities.'
+                    },
+                    {
+                        id: 'sermon2',
+                        title: 'Walking in Prophetic Authority',
+                        speaker: 'Prophetess Sarah Mukudzi',
+                        date: '2024-12-08',
+                        type: 'audio',
+                        thumbnail: 'https://via.placeholder.com/400x300?text=Prophetic+Authority',
+                        description: 'Understanding and operating in the prophetic gifts God has given us.'
+                    }
+                ]
+            };
+
+            // State management
+            let activeMagazineId = null;
+            let activePageIndex = 0;
+            let selectedBlockId = null;
+            let uploadedFiles = [];
+
+            // DOM Elements
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            // Magazine elements
+            const magazineListView = document.getElementById('magazine-list-view');
+            const editorView = document.getElementById('editor-view');
+            const magazinesGrid = document.getElementById('magazines-grid');
+            const newMagazineBtn = document.getElementById('new-magazine-btn');
+            const backToListBtn = document.getElementById('back-to-list-btn');
+            const magazineTitleInput = document.getElementById('magazine-title-input');
+            const editorCanvas = document.getElementById('editor-canvas');
+            const pagesSidebar = document.getElementById('pages-sidebar');
+            const addPageBtn = document.getElementById('add-page-btn');
+            const propertiesPanel = document.getElementById('properties-panel');
+            const propertiesContent = document.getElementById('properties-content');
+            const addBlockBtns = document.querySelectorAll('.add-block-btn');
+            const publishBtn = document.getElementById('publish-btn');
+            const deleteMagazineBtn = document.getElementById('delete-magazine-btn');
+            
+            // Modal elements
+            const uploadModal = document.getElementById('upload-modal');
+            const publishModal = document.getElementById('publish-modal');
+            const uploadSermonBtn = document.getElementById('upload-sermon-btn');
+            const sermonsGrid = document.getElementById('sermons-grid');
+            const contactForm = document.getElementById('contact-form');
+
+            // Navigation
+            function showPage(pageId) {
+                pages.forEach(page => {
+                    page.style.display = (page.id === pageId + '-page') ? 'block' : 'none';
+                });
+                if (pageId === 'magazines') {
+                    showMagazineList();
+                } else if (pageId === 'sermons') {
+                    renderSermons();
+                }
+                mobileMenu.classList.add('hidden');
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = e.currentTarget.getAttribute('data-page');
+                    showPage(pageId);
+                });
+            });
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Sermons functionality
+            function renderSermons() {
+                if (!sermonsGrid) return;
+                
+                sermonsGrid.innerHTML = '';
+                db.sermons.forEach(sermon => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all';
+                    card.innerHTML = `
+                        <div class="h-48 bg-gray-200 flex items-center justify-center">
+                            <img src="${sermon.thumbnail}" alt="${sermon.title}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-2">${sermon.title}</h3>
+                            <p class="text-primary font-medium mb-2">${sermon.speaker}</p>
+                            <p class="text-gray-500 text-sm mb-3">${new Date(sermon.date).toLocaleDateString()}</p>
+                            <p class="text-gray-600 dark:text-gray-300 mb-4">${sermon.description}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${sermon.type === 'video' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                                    <i class="fas fa-${sermon.type === 'video' ? 'video' : 'volume-up'} mr-1"></i>
+                                    ${sermon.type}
+                                </span>
+                                <button class="text-primary hover:text-purple-700 font-semibold">
+                                    <i class="fas fa-play mr-1"></i>Play
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    sermonsGrid.appendChild(card);
+                });
+            }
+
+            // Magazine functionality
+            function renderMagazineList() {
+                magazinesGrid.innerHTML = '';
+                db.magazines.forEach(magazine => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer';
+                    card.dataset.id = magazine.id;
+                    
+                    const previewPage = magazine.pages[0] || [];
+                    let previewContent = previewPage.slice(0, 2).map(block => {
+                        if (block.type === 'heading') return `<h3 class="text-lg font-bold truncate">${block.content}</h3>`;
+                        if (block.type === 'text') return `<p class="text-sm text-gray-600 dark:text-gray-300 truncate">${block.content.replace(/<[^>]+>/g, '')}</p>`;
+                        return '';
+                    }).join('');
+                    
+                    card.innerHTML = `
+                        <div class="h-32 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900 dark:to-indigo-900 rounded-lg mb-4 flex items-center justify-center p-4 overflow-hidden">
+                            <div class="text-center">${previewContent || '<p class="text-gray-400">Empty Magazine</p>'}</div>
+                        </div>
+                        <h2 class="text-xl font-semibold mb-2">${magazine.title}</h2>
+                        <p class="text-sm text-gray-500">${magazine.pages.length} pages</p>
+                    `;
+                    
+                    card.addEventListener('click', () => openEditor(magazine.id));
+                    magazinesGrid.appendChild(card);
+                });
+            }
+
+            function openEditor(id) {
+                activeMagazineId = id;
+                activePageIndex = 0;
+                selectedBlockId = null;
+                magazineListView.classList.add('hidden');
+                editorView.classList.remove('hidden');
+                renderEditor();
+            }
+
+            function showMagazineList() {
+                activeMagazineId = null;
+                editorView.classList.add('hidden');
+                magazineListView.classList.remove('hidden');
+                renderMagazineList();
+            }
+
+            function renderEditor() {
+                if (!activeMagazineId) return;
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                magazineTitleInput.value = magazine.title;
+                renderPagesSidebar();
+                renderCanvas();
+            }
+
+            function renderPagesSidebar() {
+                pagesSidebar.innerHTML = '';
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                magazine.pages.forEach((page, index) => {
+                    const pagePreview = document.createElement('div');
+                    pagePreview.className = `p-4 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors ${index === activePageIndex ? 'active border-primary bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600'}`;
+                    pagePreview.innerHTML = `<i class="fas fa-file-alt mr-2"></i>Page ${index + 1}`;
+                    pagePreview.addEventListener('click', () => {
+                        activePageIndex = index;
+                        renderEditor();
+                    });
+                    pagesSidebar.appendChild(pagePreview);
+                });
+            }
+
+            function renderCanvas() {
+                editorCanvas.innerHTML = '';
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                const page = magazine.pages[activePageIndex] || [];
+                
+                if (page.length === 0) {
+                    editorCanvas.innerHTML = `
+                        <div class="text-center text-gray-400 py-20">
+                            <i class="fas fa-plus-circle text-6xl mb-4"></i>
+                            <p class="text-xl">Add your first content block</p>
+                            <p class="text-sm">Choose from the blocks panel on the right</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                page.forEach(block => {
+                    const blockEl = document.createElement('div');
+                    blockEl.className = 'content-block p-3 rounded-lg';
+                    blockEl.dataset.id = block.id;
+                    blockEl.innerHTML = `
+                        <div class="block-toolbar">
+                            <button class="drag-handle hover:text-white" title="Move">
+                                <i class="fas fa-arrows-alt"></i>
+                            </button>
+                            <button class="delete-block-btn hover:text-red-300" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        ${renderBlock(block, true)}
+                    `;
+                    
+                    blockEl.querySelector('.delete-block-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteBlock(block.id);
+                    });
+                    
+                    blockEl.addEventListener('click', (e) => {
+                        if (e.target.closest('.block-toolbar')) return;
+                        selectBlock(block.id);
+                    });
+                    
+                    editorCanvas.appendChild(blockEl);
+                });
+            }
+
+            function renderBlock(block, isEditor) {
+                const style = Object.entries(block.style || {}).map(([k, v]) => 
+                    `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}:${v}`
+                ).join(';');
+                
+                switch (block.type) {
+                    case 'heading':
+                        return `<h2 ${isEditor ? 'contenteditable="true"' : ''} data-prop="content" style="${style}" class="outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1">${block.content}</h2>`;
+                    case 'text':
+                        return `<div ${isEditor ? 'contenteditable="true"' : ''} data-prop="content" style="${style}" class="outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1">${block.content}</div>`;
+                    case 'image':
+                        return `<img src="${block.content}" style="${style}" class="${isEditor ? 'cursor-pointer hover:opacity-75' : ''} max-w-full h-auto">`;
+                    case 'video':
+                        return `<video controls style="${style}" class="max-w-full h-auto"><source src="${block.content}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                    case 'audio':
+                        return `<audio controls style="${style}" class="w-full"><source src="${block.content}" type="audio/mpeg">Your browser does not support the audio tag.</audio>`;
+                    case 'divider':
+                        return `<hr style="${style}" class="my-4">`;
+                    default:
+                        return '';
+                }
+            }
+
+            function selectBlock(blockId) {
+                selectedBlockId = blockId;
+                document.querySelectorAll('.content-block').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                const blockEl = document.querySelector(`[data-id="${blockId}"]`);
+                if (blockEl) {
+                    blockEl.classList.add('selected');
+                }
+                renderPropertiesPanel();
+            }
+
+            function renderPropertiesPanel() {
+                if (!selectedBlockId) {
+                    propertiesPanel.classList.add('hidden');
+                    return;
+                }
+                
+                propertiesPanel.classList.remove('hidden');
+                const block = findBlockById(selectedBlockId);
+                if (!block) return;
+                
+                let properties = '';
+                
+                if (block.type === 'heading' || block.type === 'text') {
+                    properties = `
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Font Size (px)</label>
+                            <input type="number" data-style="fontSize" value="${(block.style.fontSize || '16px').replace('px', '')}" 
+                                   class="w-full text-base px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Text Color</label>
+                            <input type="color" data-style="color" value="${block.style.color || '#000000'}" 
+                                   class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Text Alignment</label>
+                            <select data-style="textAlign" class="w-full text-base px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                <option value="left" ${block.style.textAlign === 'left' ? 'selected' : ''}>Left</option>
+                                <option value="center" ${block.style.textAlign === 'center' ? 'selected' : ''}>Center</option>
+                                <option value="right" ${block.style.textAlign === 'right' ? 'selected' : ''}>Right</option>
+                                <option value="justify" ${block.style.textAlign === 'justify' ? 'selected' : ''}>Justify</option>
+                            </select>
+                        </div>
+                    `;
+                } else if (block.type === 'image' || block.type === 'video') {
+                    properties = `
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Media URL</label>
+                            <input type="text" data-prop="content" value="${block.content}" 
+                                   class="w-full text-base px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Width (%)</label>
+                            <input type="range" min="10" max="100" data-style="width" value="${(block.style.width || '100%').replace('%', '')}" 
+                                   class="w-full">
+                            <div class="text-center text-sm text-gray-500 mt-1">${(block.style.width || '100%').replace('%', '')}%</div>
+                        </div>
+                    `;
+                }
+                
+                propertiesContent.innerHTML = properties;
+                
+                // Add event listeners to property inputs
+                propertiesContent.querySelectorAll('input, select').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        const propType = e.target.dataset.style ? 'style' : 'prop';
+                        const propName = e.target.dataset.style || e.target.dataset.prop;
+                        let value = e.target.value;
+                        
+                        if (propName === 'fontSize') value += 'px';
+                        if (propName === 'width') value += '%';
+                        
+                        updateBlock(selectedBlockId, propType, propName, value);
+                    });
+                });
+            }
+
+            function findBlockById(blockId) {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                for (const page of magazine.pages) {
+                    const block = page.find(b => b.id === blockId);
+                    if (block) return block;
+                }
+                return null;
+            }
+
+            function updateBlock(blockId, propType, propName, value) {
+                const block = findBlockById(blockId);
+                if (!block) return;
+                
+                if (propType === 'style') {
+                    if (!block.style) block.style = {};
+                    block.style[propName] = value;
+                } else {
+                    block[propName] = value;
+                }
+                
+                renderCanvas();
+                selectBlock(blockId); // Keep selection
+            }
+
+            function addBlock(type) {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                const newBlock = {
+                    id: 'block' + Date.now(),
+                    type: type,
+                    content: getDefaultContent(type),
+                    style: getDefaultStyle(type)
+                };
+                
+                magazine.pages[activePageIndex].push(newBlock);
+                renderCanvas();
+            }
+
+            function getDefaultContent(type) {
+                switch (type) {
+                    case 'heading': return 'New Heading';
+                    case 'text': return 'Enter your text content here...';
+                    case 'image': return 'https://via.placeholder.com/400x300?text=Image+Placeholder';
+                    case 'video': return 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+                    case 'audio': return 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav';
+                    default: return '';
+                }
+            }
+
+            function getDefaultStyle(type) {
+                switch (type) {
+                    case 'heading': return { fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' };
+                    case 'text': return { fontSize: '16px', lineHeight: '1.6', marginBottom: '16px' };
+                    case 'image': return { width: '100%', borderRadius: '8px', marginBottom: '16px' };
+                    case 'video': return { width: '100%', borderRadius: '8px', marginBottom: '16px' };
+                    case 'audio': return { width: '100%', marginBottom: '16px' };
+                    case 'divider': return { margin: '24px 0', borderColor: '#e5e7eb' };
+                    default: return {};
+                }
+            }
+
+            function deleteBlock(blockId) {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                magazine.pages[activePageIndex] = magazine.pages[activePageIndex].filter(b => b.id !== blockId);
+                
+                if (selectedBlockId === blockId) {
+                    selectedBlockId = null;
+                    propertiesPanel.classList.add('hidden');
+                }
+                
+                renderCanvas();
+            }
+
+            function createNewMagazine() {
+                const newId = 'mag' + Date.now();
+                const newMagazine = {
+                    id: newId,
+                    title: 'Untitled Magazine',
+                    pages: [[{
+                        id: 'block' + Date.now(),
+                        type: 'heading',
+                        content: 'Revival Apostolic Faith Mission',
+                        style: { textAlign: 'center', fontSize: '36px', color: '#6B46C1', fontWeight: 'bold' }
+                    }]]
+                };
+                
+                db.magazines.push(newMagazine);
+                openEditor(newId);
+            }
+
+            function deleteMagazine() {
+                if (!activeMagazineId) return;
+                
+                // Custom confirmation dialog
+                showConfirmDialog('Are you sure you want to delete this magazine? This action cannot be undone.', () => {
+                    db.magazines = db.magazines.filter(m => m.id !== activeMagazineId);
+                    showMagazineList();
+                });
+            }
+
+            function addPage() {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                magazine.pages.push([]);
+                activePageIndex = magazine.pages.length - 1;
+                renderEditor();
+            }
+
+            function showPublishModal() {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                const url = `${window.location.origin}${window.location.pathname}?view=${magazine.id}`;
+                
+                document.getElementById('share-link').value = url;
+                
+                const shareText = `Check out our new magazine: ${magazine.title}`;
+                document.getElementById('whatsapp-share-btn').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + url)}`;
+                document.getElementById('email-share-btn').href = `mailto:?subject=${encodeURIComponent(magazine.title)}&body=${encodeURIComponent(shareText + '\n\n' + url)}`;
+                
+                publishModal.classList.remove('hidden');
+            }
+
+            function downloadAsPDF() {
+                const magazine = db.magazines.find(m => m.id === activeMagazineId);
+                if (!magazine) return;
+                
+                // Create printable content
+                const printableArea = document.createElement('div');
+                printableArea.style.cssText = 'width: 8.5in; padding: 0.5in; font-family: Arial, sans-serif; background: white; color: black;';
+                
+                // Add magazine title
+                printableArea.innerHTML += `<h1 style="font-size: 36px; text-align: center; margin-bottom: 30px; color: #6B46C1;">${magazine.title}</h1>`;
+                
+                // Add pages
+                magazine.pages.forEach((page, pageIndex) => {
+                    const pageElement = document.createElement('div');
+                    pageElement.style.cssText = 'page-break-after: always; margin-bottom: 40px;';
+                    
+                    if (pageIndex > 0) {
+                        pageElement.innerHTML += `<h2 style="text-align: center; color: #666; margin-bottom: 20px;">Page ${pageIndex + 1}</h2>`;
+                    }
+                    
+                    page.forEach(block => {
+                        pageElement.innerHTML += renderBlock(block, false);
+                    });
+                    
+                    printableArea.appendChild(pageElement);
+                });
+                
+                document.body.appendChild(printableArea);
+                
+                const opt = {
+                    margin: 0.5,
+                    filename: `${magazine.title.replace(/ /g, '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                
+                html2pdf().from(printableArea).set(opt).save().then(() => {
+                    document.body.removeChild(printableArea);
+                });
+            }
+
+            // Custom dialog functions
+            function showConfirmDialog(message, onConfirm) {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+                        <h3 class="text-xl font-semibold mb-4">Confirm Action</h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">${message}</p>
+                        <div class="flex justify-end space-x-4">
+                            <button class="cancel-btn px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
+                            <button class="confirm-btn px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.querySelector('.cancel-btn').addEventListener('click', () => {
+                    modal.remove();
+                });
+                
+                modal.querySelector('.confirm-btn').addEventListener('click', () => {
+                    modal.remove();
+                    onConfirm();
+                });
+                
+                document.body.appendChild(modal);
+            }
+
+            // Event listeners
+            newMagazineBtn.addEventListener('click', createNewMagazine);
+            backToListBtn.addEventListener('click', showMagazineList);
+            addPageBtn.addEventListener('click', addPage);
+            publishBtn.addEventListener('click', showPublishModal);
+            deleteMagazineBtn.addEventListener('click', deleteMagazine);
+
+            magazineTitleInput.addEventListener('change', (e) => {
+                if (activeMagazineId) {
+                    db.magazines.find(m => m.id === activeMagazineId).title = e.target.value;
+                }
+            });
+
+            addBlockBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addBlock(btn.dataset.blockType);
+                });
+            });
+
+            // Publish modal events
+            document.getElementById('close-publish-modal-btn').addEventListener('click', () => {
+                publishModal.classList.add('hidden');
+            });
+
+            document.getElementById('download-pdf-btn').addEventListener('click', () => {
+                downloadAsPDF();
+            });
+
+            // Content editing
+            editorCanvas.addEventListener('input', (e) => {
+                const blockEl = e.target.closest('.content-block');
+                if (!blockEl) return;
+                
+                const blockId = blockEl.dataset.id;
+                const propName = e.target.dataset.prop;
+                
+                if (blockId && propName) {
+                    updateBlock(blockId, 'prop', propName, e.target.innerHTML);
+                }
+            });
+
+            // Upload functionality
+            uploadSermonBtn?.addEventListener('click', () => {
+                uploadModal.classList.remove('hidden');
+            });
+
+            document.getElementById('cancel-upload-btn')?.addEventListener('click', () => {
+                uploadModal.classList.add('hidden');
+            });
+
+            // Contact form
+            contactForm?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                // Simple success message
+                const successDiv = document.createElement('div');
+                successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                successDiv.innerHTML = '<i class="fas fa-check mr-2"></i>Message sent successfully!';
+                document.body.appendChild(successDiv);
+                
+                setTimeout(() => successDiv.remove(), 3000);
+                contactForm.reset();
+            });
+
+            // Routing
+            function handleRouting() {
+                const params = new URLSearchParams(window.location.search);
+                const viewMagazineId = params.get('view');
+                
+                if (viewMagazineId) {
+                    showMagazineViewer(viewMagazineId);
+                } else {
+                    showPage('home');
+                }
+            }
+
+            function showMagazineViewer(magazineId) {
+                const magazine = db.magazines.find(m => m.id === magazineId);
+                if (!magazine) {
+                    document.getElementById('viewer-container').innerHTML = `
+                        <div class="text-center p-20">
+                            <h1 class="text-3xl font-bold mb-4">Magazine not found</h1>
+                            <a href="/" class="text-primary hover:underline">Return to Home</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                document.getElementById('main-content').style.display = 'none';
+                document.querySelector('header').style.display = 'none';
+                document.getElementById('viewer-container').classList.remove('hidden');
+                
+                const viewerContent = document.getElementById('viewer-content');
+                viewerContent.innerHTML = `
+                    <div class="text-center mb-8">
+                        <h1 class="text-5xl font-bold mb-4">${magazine.title}</h1>
+                        <div class="w-24 h-1 bg-primary mx-auto"></div>
+                    </div>
+                `;
+                
+                magazine.pages.forEach((page, index) => {
+                    const pageElement = document.createElement('div');
+                    pageElement.className = 'viewer-page mb-16 page-break';
+                    
+                    if (index > 0) {
+                        pageElement.innerHTML += `<h2 class="text-center text-gray-500 mb-8 text-lg">Page ${index + 1}</h2>`;
+                    }
+                    
+                    page.forEach(block => {
+                        pageElement.innerHTML += renderBlock(block, false);
+                    });
+                    
+                    viewerContent.appendChild(pageElement);
+                });
+            }
+
+            // Initialize
+            handleRouting();
+        });
+    </script>
+</body>
+</html>
